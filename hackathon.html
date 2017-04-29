@@ -45,6 +45,12 @@
       .js-homes {
         background-color: rgba(162, 0, 255, .5);
       }
+      .js-family-homes {
+        background-color: rgba(162, 0, 255, .5);
+      }
+      .js-not-removed {
+        background-color: rgba(255, 196, 13, 1);
+      }
 
       .off {
         background-color: rgba(161, 161, 161, 0.35);
@@ -54,7 +60,7 @@
   <body>
     <div id="map"></div>
     <script>
-      var homeGradient = [
+      var homeGradient = familyHomeGradient = [
         "rgba(162, 0, 255, 0)",
         "rgba(162, 0, 255, 1)",
         "rgba(162, 0, 255, 1)",
@@ -88,6 +94,23 @@
         "rgba(255, 0, 151, 1)",
         "rgba(255, 0, 151, 1)",
       ];
+      var unremovedGradient = [
+        "rgba(255, 196, 13, 0)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+        "rgba(255, 196, 13, 1)",
+      ];
       function initMap() {
         window.map = new google.maps.Map(document.getElementById('map'), {
           zoom: 10,
@@ -108,6 +131,15 @@
             caseHeatmap.setMap(null);
           }
         })
+        $(".js-not-removed").on("click", function(e) {
+          if ($(e.target).hasClass('off')) {
+            $(e.target).removeClass('off')
+            unremovedHeatmap.setMap(map);
+          } else {
+            $(e.target).addClass('off')
+            unremovedHeatmap.setMap(null);
+          }
+        })
         $(".js-homes").on("click", function(e) {
           if ($(e.target).hasClass('off')) {
             $(e.target).removeClass('off')
@@ -115,6 +147,15 @@
           } else {
             $(e.target).addClass('off')
             homeHeatmap.setMap(null);
+          }
+        })
+        $(".js-family-homes").on("click", function(e) {
+          if ($(e.target).hasClass('off')) {
+            $(e.target).removeClass('off')
+            familyHomeHeatmap.setMap(map);
+          } else {
+            $(e.target).addClass('off')
+            familyHomeHeatmap.setMap(null);
           }
         })
         $(".js-county-lines").on("click", function(e) {
@@ -132,21 +173,31 @@
       // set of coordinates.
       function addMarkers(results) {
         var homeHeatmapData = [];
+        var familyHomeData = [];
         for (var i = 0; i < window.home_data["data"].length; i++) {
           var lat = window.home_data["data"][i][14][1];
           var lng = window.home_data["data"][i][14][2];
           var latLng = new google.maps.LatLng(lat, lng);
+          if (window.home_data["data"][i][11] == "Group Home") {
+            homeHeatmapData.push(latLng);
+          } else {
+            familyHomeData.push(latLng);
+          }
 
-          homeHeatmapData.push(latLng);
         }
-        var caseHeatmapData = []
+        var caseHeatmapData = [];
+        var unremovedData = [];
         for (var i = 0; i < window.removal_data.length; i++) {
           if (window.removal_data[i]["removal_ind"] == "Y") {
             var lat = window.removal_data[i]["location"]["coordinates"][1];
             var lng = window.removal_data[i]["location"]["coordinates"][0];
             var latLng = new google.maps.LatLng(lat, lng);
-
             caseHeatmapData.push(latLng);
+          } else if (window.removal_data[i]["removal_ind"] == "N" && !!window.removal_data[i]["location"]) {
+            var lat = window.removal_data[i]["location"]["coordinates"][1];
+            var lng = window.removal_data[i]["location"]["coordinates"][0];
+            var latLng = new google.maps.LatLng(lat, lng);
+            unremovedData.push(latLng);
           }
         }
 
@@ -172,10 +223,26 @@
           opacity: 0.7,
           radius: 50
         });
+        window.unremovedHeatmap = new google.maps.visualization.HeatmapLayer({
+          data: unremovedData,
+          dissipating: true,
+          gradient: unremovedGradient,
+          map: null,
+          opacity: 0.7,
+          radius: 50
+        });
         window.homeHeatmap = new google.maps.visualization.HeatmapLayer({
           data: homeHeatmapData,
           dissipating: true,
           gradient: homeGradient,
+          map: map,
+          opacity: 0.7,
+          radius: 50
+        });
+        window.familyHomeHeatmap = new google.maps.visualization.HeatmapLayer({
+          data: familyHomeData,
+          dissipating: true,
+          gradient: familyHomeGradient,
           map: map,
           opacity: 0.7,
           radius: 50
@@ -188,8 +255,10 @@
       }
     </script>
     <div class="buttonbox">
-      <button class="js-cases">Child Removal</button>
-      <button class="js-homes">Homes</button>
+      <button class="js-cases">Child Removed</button>
+      <button class="js-not-removed off">Not Removed</button>
+      <button class="js-homes">Group Home</button>
+      <button class="js-family-homes">Family Home</button>
       <!-- <button class="js-offices">Offices</button> -->
       <button class="js-county-lines off">Neighborhoods</button>
     </div>
