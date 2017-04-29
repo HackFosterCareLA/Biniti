@@ -2,7 +2,7 @@
 <html>
   <head>
     <script src="home_data.js"></script>
-    <script src="caseload_data.js"></script>
+    <script src="removal.js"></script>
     <script src="office_data.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
@@ -140,12 +140,14 @@
           homeHeatmapData.push(latLng);
         }
         var caseHeatmapData = []
-        for (var i = 0; i < window.caseload_data["data"].length; i++) {
-          var lat = window.caseload_data["data"][i][21][1];
-          var lng = window.caseload_data["data"][i][21][2];
-          var latLng = new google.maps.LatLng(lat, lng);
+        for (var i = 0; i < window.removal_data.length; i++) {
+          if (window.removal_data[i]["removal_ind"] == "Y") {
+            var lat = window.removal_data[i]["location"]["coordinates"][1];
+            var lng = window.removal_data[i]["location"]["coordinates"][0];
+            var latLng = new google.maps.LatLng(lat, lng);
 
-          caseHeatmapData.push(latLng);
+            caseHeatmapData.push(latLng);
+          }
         }
 
         var officeData = []
