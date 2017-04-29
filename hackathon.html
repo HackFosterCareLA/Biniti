@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="home_data.js"></script>
+    <script src="caseload_data.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .buttonbox {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 187px;
+        text-align: right;
+        margin: 10px;
+      }
+
+      button {
+        background-color: rgba(27, 161, 226, 0.35);
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid black;
+        font-weight: bold;
+        font-size: 16pt;
+        margin: 5px;
+        cursor: pointer;
+      }
+
+      .js-cases {
+        background-color: rgba(255, 0, 151, .5);
+      }
+      .js-homes {
+        background-color: rgba(162, 0, 255, .5);
+      }
+
+      .off {
+        background-color: rgba(161, 161, 161, 0.35);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      var homeGradient = [
+        "rgba(162, 0, 255, 0)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+        "rgba(162, 0, 255, 1)",
+      ];
+      var caseGradient = [
+        "rgba(255, 0, 151, 0)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+        "rgba(255, 0, 151, 1)",
+      ];
+      function initMap() {
+        window.map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 10,
+          center: new google.maps.LatLng(34.0522, -118.2437),
+          styles: [{"featureType":"administrative","elementType":"all","stylers":[{"saturation":"-100"}]},{"featureType":"administrative.province","elementType":"all","stylers":[{"visibility":"off"}]},{"featureType":"landscape","elementType":"all","stylers":[{"saturation":-100},{"lightness":65},{"visibility":"on"}]},{"featureType":"poi","elementType":"all","stylers":[{"saturation":-100},{"lightness":"50"},{"visibility":"simplified"}]},{"featureType":"road","elementType":"all","stylers":[{"saturation":"-100"}]},{"featureType":"road.highway","elementType":"all","stylers":[{"visibility":"simplified"}]},{"featureType":"road.arterial","elementType":"all","stylers":[{"lightness":"30"}]},{"featureType":"road.local","elementType":"all","stylers":[{"lightness":"40"}]},{"featureType":"transit","elementType":"all","stylers":[{"saturation":-100},{"visibility":"simplified"}]},{"featureType":"water","elementType":"geometry","stylers":[{"hue":"#ffff00"},{"lightness":-25},{"saturation":-97}]},{"featureType":"water","elementType":"labels","stylers":[{"lightness":-25},{"saturation":-100}]}]
+
+        });
+        addMarkers();
+      }
+
+      function initButtons() {
+        $(".js-cases").on("click", function(e) {
+          if ($(e.target).hasClass('off')) {
+            $(e.target).removeClass('off')
+            caseHeatmap.setMap(map);
+          } else {
+            $(e.target).addClass('off')
+            caseHeatmap.setMap(null);
+          }
+        })
+        $(".js-homes").on("click", function(e) {
+          if ($(e.target).hasClass('off')) {
+            $(e.target).removeClass('off')
+            homeHeatmap.setMap(map);
+          } else {
+            $(e.target).addClass('off')
+            homeHeatmap.setMap(null);
+          }
+        })
+        $(".js-county-lines").on("click", function(e) {
+          if ($(e.target).hasClass('off')) {
+            $(e.target).removeClass('off')
+            countyLayer.setMap(map);
+          } else {
+            $(e.target).addClass('off')
+            countyLayer.setMap(null);
+          }
+        })
+      }
+
+      function toggleButton(btn) {
+        caseHeatmap
+      }
+
+      // Loop through the results array and place a marker for each
+      // set of coordinates.
+      function addMarkers(results) {
+        // debugger
+        var homeHeatmapData = [];
+        for (var i = 0; i < window.home_data["data"].length; i++) {
+          var lat = window.home_data["data"][i][14][1];
+          var lng = window.home_data["data"][i][14][2];
+          var latLng = new google.maps.LatLng(lat, lng);
+          // var marker = new google.maps.Marker({
+          //   position: latLng,
+          //   map: map
+          // });
+          homeHeatmapData.push(latLng);
+        }
+        var caseHeatmapData = []
+        for (var i = 0; i < window.caseload_data["data"].length; i++) {
+          var lat = window.caseload_data["data"][i][21][1];
+          var lng = window.caseload_data["data"][i][21][2];
+          var latLng = new google.maps.LatLng(lat, lng);
+          // var marker = new google.maps.Marker({
+          //   position: latLng,
+          //   map: map
+          // });
+          caseHeatmapData.push(latLng);
+        }
+
+        var outerCoords = [
+          {lat: -32.364, lng: 153.207}, // north west
+          {lat: -35.364, lng: 153.207}, // south west
+          {lat: -35.364, lng: 158.207}, // south east
+          {lat: -32.364, lng: 158.207}  // north east
+        ];
+
+        window.caseHeatmap = new google.maps.visualization.HeatmapLayer({
+          data: caseHeatmapData,
+          dissipating: true,
+          gradient: caseGradient,
+          map: map,
+          opacity: 0.7,
+          radius: 50
+        });
+        window.homeHeatmap = new google.maps.visualization.HeatmapLayer({
+          data: homeHeatmapData,
+          dissipating: true,
+          gradient: homeGradient,
+          map: map,
+          opacity: 0.7,
+          radius: 50
+        });
+
+        window.countyLayer = new google.maps.KmlLayer({
+          url: 'http://boundaries.latimes.com/1.0/boundary-set/la-county-neighborhoods-current/?format=kml',
+          map: null
+        });
+        initButtons();
+      }
+    </script>
+    <div class="buttonbox">
+      <button class="js-cases">Cases</button>
+      <button class="js-homes">Homes</button>
+      <!-- <button class="js-offices">Offices</button> -->
+      <button class="js-county-lines off">County Lines</button>
+    </div>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD3EROhu6GD_jEl8oZATnbijJ02PTl4edU&libraries=visualization&callback=initMap">
+    </script>
+  </body>
+</html>
